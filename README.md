@@ -1,6 +1,6 @@
 # Tensorflow implementation of VoxResNet
 
-This is a repository implementing Deep Voxelwise Residual Networks for Volumetric Brain Segmentation (VoxResNet) [1]
+This is a repository contains code of Deep Voxelwise Residual Networks for Volumetric Brain Segmentation (VoxResNet) [1]
 
 
 # Reference
