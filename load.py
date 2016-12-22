@@ -1,0 +1,80 @@
+import random
+import nibabel as nib
+import numpy as np
+
+
+def load_nifti(filename):
+    """
+    load image from NIFTI file
+    Parameters
+    ----------
+    filename : str
+        filename of NIFTI file
+    Returns
+    -------
+    img : np.ndarray
+        image data
+    """
+    img = nib.load(filename).get_data()
+    img = np.squeeze(img)
+    img = np.copy(img, order='C')
+    return img
+
+
+def one_hot_encode(label):
+    return np.identity(4)[label]
+
+
+def load_img(filename):
+    return load_nifti(filename).astype(np.float) / 255
+
+
+def load_label(filename):
+    return one_hot_encode(load_nifti(filename).astype(np.int))
+
+
+def extract_patch(data, starts, ends):
+    return data[starts[0]: ends[0], starts[1]: ends[1], starts[2]: ends[2]]
+
+
+def sample(df, n, shape):
+    """
+    randomly sample patch images from DataFrame
+    Parameters
+    ----------
+    df : pd.DataFrame
+        DataFrame containing name of image files
+    n : int
+        number of patches to extract
+    shape : list
+        shape of patches to extract
+    Returns
+    -------
+    batch : list
+        pairs of image and label
+    """
+    N = len(df)
+    assert N >= n
+    indices = np.random.choice(N, n, replace=False)
+    img_files = df["image"][indices]
+    label_files = df["label"][indices]
+    imgs = []
+    labels = []
+    for img_file, label_file in zip(img_files, label_files):
+        img = load_img(img_file)
+        label = load_label(label_file)
+        ps = np.array([random.randint(0, len_max - len_) for len_, len_max in zip(shape, img.shape)])
+        imgs.append(extract_patch(img, ps, [p + len_ for p, len_ in zip(ps, shape)]))
+        labels.append(extract_patch(label, ps, [p + len_ for p, len_ in zip(ps, shape)]))
+    imgs = np.array(imgs)
+    labels = np.array(labels)
+    return np.expand_dims(imgs, -1), labels
+
+
+if __name__ == '__main__':
+    import pandas as pd
+    filename = "files.csv"
+    df = pd.read_csv(filename)
+    img, label = sample(df, 2, [20, 20, 20])
+    print img.shape
+    print label.shape
