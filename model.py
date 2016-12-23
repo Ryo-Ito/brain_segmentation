@@ -30,6 +30,22 @@ class VoxResNet(chainer.chain):
                 out_channels=64,
                 ksize=3,
                 stride=2,
+                pad=1),
+            bnorm1c=L.BatchNormalization(64),
+            conv2a=L.ConvolutionND(
+                ndim=3,
+                in_channels=64,
+                out_channels=64,
+                ksize=3,
+                stride=1,
+                pad=1),
+            bnorm2a=L.BatchNormalization(64),
+            conv2b=L.ConvolutionND(
+                ndim=3,
+                in_channels=64,
+                out_channels=64,
+                ksize=3,
+                stride=1,
                 pad=1)
         )
         self.train = False
@@ -48,6 +64,23 @@ class VoxResNet(chainer.chain):
         logit
             logit to be passed to softmax activation
         """
-        h = F.relu(self.conv1a(x))
+        h = self.conv1a(x)
         h = self.bnorm1a(h, test=not self.train)
-        return F.relu(self.conv1b(h))
+        h = F.relu(h)
+
+        h = self.conv1b(h)
+        h = self.bnorm1b(h, test=not self.train)
+        h = F.relu(h)
+
+        h = self.conv1c(h)
+
+        h_ = h
+        h = self.bnorm1c(h)
+        h = F.relu(h)
+        h = self.conv2a(h)
+        h = self.bnorm2a(h)
+        h = F.relu(h)
+        h = self.conv2b(h)
+        h = h + h_
+
+        return h
