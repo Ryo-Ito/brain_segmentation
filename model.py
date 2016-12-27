@@ -47,7 +47,11 @@ class VoxResNet(chainer.Chain):
             bnorm6=L.BatchNormalization(64),
             conv7=L.ConvolutionND(3, 64, 64, 3, stride=2, pad=1),
             voxres8=VoxResModule(64),
-            voxres9=VoxResModule(64)
+            voxres9=VoxResModule(64),
+            deconv1=L.DeconvolutionND(3, 32),
+            deconv3=L.DeconvolutionND(),
+            deconv6=L.DeconvolutionND(),
+            deconv9=L.DeconvolutionND()
         )
         self.train = False
 
