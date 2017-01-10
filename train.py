@@ -20,7 +20,7 @@ def main():
         "--gpu", "-g", default=-1,
         help="negative value indicates no gpu")
     parser.add_argument(
-        "--input", type=str,
+        "--input", type=str, default="training_dataset.csv",
         help="csv file containing filename of image and its label")
     parser.add_argument("--n_batch", type=int, default=1, help="batch size")
     parser.add_argument(
