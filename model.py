@@ -61,27 +61,27 @@ class VoxResNet(chainer.Chain):
 
         Parameters
         ----------
-        x
+        x : [xlen, ylen, zlen, 1]
             image to perform semantic segmentation
 
         Returns
         -------
-        logit
+        logit [xlen, ylen, zlen, 4]
             logit to be passed to softmax activation
         """
         h = self.conv1a(x)
         h = F.relu(self.bnorm1a(h, test=not self.train))
         h1 = self.conv1b(h)
-        h = F.relu(self.bnorm1b(h1, test=not self.train))
-        h = self.conv1c(h)
-        h = self.voxres2(h, self.train)
-        h2 = self.voxres3(h, self.train)
-        h = F.relu(self.bnorm3(h2, test=not self.train))
-        h = self.conv4(h)
-        h = self.voxres5(h, self.train)
-        h3 = self.voxres6(h, self.train)
-        h = F.relu(self.bnorm6(h3, test=not self.train))
-        h = self.conv7(h)
-        h = self.voxres8(h, self.train)
-        h4 = self.voxres9(h, self.train)
-        return h
+        # h = F.relu(self.bnorm1b(h1, test=not self.train))
+        # h = self.conv1c(h)
+        # h = self.voxres2(h, self.train)
+        # h2 = self.voxres3(h, self.train)
+        # h = F.relu(self.bnorm3(h2, test=not self.train))
+        # h = self.conv4(h)
+        # h = self.voxres5(h, self.train)
+        # h3 = self.voxres6(h, self.train)
+        # h = F.relu(self.bnorm6(h3, test=not self.train))
+        # h = self.conv7(h)
+        # h = self.voxres8(h, self.train)
+        # h4 = self.voxres9(h, self.train)
+        return h1

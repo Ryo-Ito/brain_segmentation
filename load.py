@@ -1,6 +1,40 @@
 import random
 import nibabel as nib
 import numpy as np
+import chainer
+
+
+class DatasetFromFiles(chainer.dataset.DatasetMixin):
+
+    def __init__(self, df, shape=[80, 80, 80]):
+        """
+        construct training data object
+
+        Parameters
+        ----------
+        df : DataFrame
+            names of image files
+        shape : array_like
+            shape of patches to extract
+        """
+        self.df = df
+        self.shape = np.array(shape)
+
+    def __len__(self):
+        return len(self.df)
+
+    def get_example(self, i):
+        path_scalar_img = df["scalar"][i]
+        path_label_img = df["label"][i]
+        scalar_img = load_scalar(path_scalar_img)
+        label_img = load_label(path_label_img)
+        p0 = np.array([random.randint(0, len_max - len_) for len_max, len_ in zip(scalar_img.shape, self.shape)])
+        p1 = p0 + self.shape
+
+        scalar_patch = extract_patch(scalar_img, p0, p1)
+        label_patch = extract_patch(label_img, p0, p1)
+
+        return np.expand_dims(scalar_patch, 0), label_patch
 
 
 def load_nifti(filename):
@@ -25,7 +59,7 @@ def one_hot_encode(label):
     return np.identity(4)[label]
 
 
-def load_img(filename):
+def load_scalar(filename):
     return load_nifti(filename).astype(np.float) / 255
 
 
