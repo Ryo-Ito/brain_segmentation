@@ -20,12 +20,12 @@ def main():
         "--gpu", "-g", default=-1,
         help="negative value indicates no gpu")
     parser.add_argument(
-        "--input", type=str, default="training_dataset.csv",
+        "--input", type=str, default="dataset_train.csv",
         help="csv file containing filename of image and its label")
     parser.add_argument("--n_batch", type=int, default=1, help="batch size")
     parser.add_argument(
         "--input_shape", type=int, nargs='*', action="store",
-        default=[100, 100, 100],
+        default=[80, 80, 80],
         help="shape of input for the network")
 
     args = parser.parse_args()
