@@ -48,10 +48,10 @@ class VoxResNet(chainer.Chain):
             conv7=L.ConvolutionND(3, 64, 64, 3, stride=2, pad=1),
             voxres8=VoxResModule(64),
             voxres9=VoxResModule(64),
-            deconv1=L.DeconvolutionND(3, 32),
-            deconv3=L.DeconvolutionND(),
-            deconv6=L.DeconvolutionND(),
-            deconv9=L.DeconvolutionND()
+            deconv1=L.DeconvolutionND(3, 32, 4, 3),
+            deconv2=L.DeconvolutionND(3, 64, 4, 3),
+            deconv4=L.DeconvolutionND(3, 64, 4, 3),
+            deconv8=L.DeconvolutionND(3, 64, 4, 3)
         )
         self.train = False
 
@@ -61,12 +61,12 @@ class VoxResNet(chainer.Chain):
 
         Parameters
         ----------
-        x : [xlen, ylen, zlen, 1]
+        x : [sample_size, 1, xlen, ylen, zlen]
             image to perform semantic segmentation
 
         Returns
         -------
-        logit [xlen, ylen, zlen, 4]
+        logit [sample_size, 4, xlen, ylen, zlen]
             logit to be passed to softmax activation
         """
         h = self.conv1a(x)
@@ -84,4 +84,6 @@ class VoxResNet(chainer.Chain):
         # h = self.conv7(h)
         # h = self.voxres8(h, self.train)
         # h4 = self.voxres9(h, self.train)
-        return h1
+
+        c1 = self.deconv1(h1)
+        return c1
