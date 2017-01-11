@@ -48,7 +48,8 @@ class VoxResNet(chainer.Chain):
             conv7=L.ConvolutionND(3, 64, 64, 3, stride=2, pad=1),
             voxres8=VoxResModule(64),
             voxres9=VoxResModule(64),
-            deconv1=L.DeconvolutionND(3, 32, 4, 3),
+            deconv1=L.DeconvolutionND(3, 32, 32, 3, pad=1),
+            conv1=L.DeconvolutionND(3, 32, 4, 3, pad=1),
             deconv2=L.DeconvolutionND(3, 64, 4, 3),
             deconv4=L.DeconvolutionND(3, 64, 4, 3),
             deconv8=L.DeconvolutionND(3, 64, 4, 3)
@@ -73,6 +74,7 @@ class VoxResNet(chainer.Chain):
         h = F.relu(self.bnorm1a(h, test=not self.train))
         h = self.conv1b(h)
         c1 = self.deconv1(h)
+        c1 = self.conv1(c1)
         # h = F.relu(self.bnorm1b(h1, test=not self.train))
         # h = self.conv1c(h)
         # h = self.voxres2(h, self.train)
