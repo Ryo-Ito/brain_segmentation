@@ -6,7 +6,7 @@ import chainer
 
 class DatasetFromFiles(chainer.dataset.DatasetMixin):
 
-    def __init__(self, df, shape=[80, 80, 80]):
+    def __init__(self, df, n_classes, shape=[80, 80, 80]):
         """
         construct training data object
 
@@ -14,10 +14,13 @@ class DatasetFromFiles(chainer.dataset.DatasetMixin):
         ----------
         df : DataFrame
             names of image files
+        n_classes : int
+            number of classes
         shape : array_like
             shape of patches to extract
         """
         self.df = df
+        self.n_classes = n_classes
         self.shape = np.array(shape)
 
     def __len__(self):
@@ -27,14 +30,14 @@ class DatasetFromFiles(chainer.dataset.DatasetMixin):
         path_scalar_img = df["scalar"][i]
         path_label_img = df["label"][i]
         scalar_img = load_scalar(path_scalar_img)
-        label_img = load_label(path_label_img)
+        label_img = load_label(path_label_img, self.n_classes)
         p0 = np.array([random.randint(0, len_max - len_) for len_max, len_ in zip(scalar_img.shape, self.shape)])
         p1 = p0 + self.shape
 
         scalar_patch = extract_patch(scalar_img, p0, p1)
         label_patch = extract_patch(label_img, p0, p1)
 
-        return np.expand_dims(scalar_patch, 0), label_patch.transpose(3, 0, 1, 2)
+        return np.expand_dims(scalar_patch, 0), label_patch.reshape(-1, self.n_classes)
 
 
 def load_nifti(filename):
@@ -55,16 +58,16 @@ def load_nifti(filename):
     return img
 
 
-def one_hot_encode(label):
-    return np.identity(4)[label]
+def one_hot_encode(label, n_classes):
+    return np.identity(n_classes)[label]
 
 
 def load_scalar(filename):
     return load_nifti(filename).astype(np.float) / 255
 
 
-def load_label(filename):
-    return one_hot_encode(load_nifti(filename).astype(np.int))
+def load_label(filename, n_classes):
+    return one_hot_encode(load_nifti(filename).astype(np.int), n_classes)
 
 
 def extract_patch(data, starts, ends):
