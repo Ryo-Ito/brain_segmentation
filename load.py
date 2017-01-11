@@ -27,8 +27,8 @@ class DatasetFromFiles(chainer.dataset.DatasetMixin):
         return len(self.df)
 
     def get_example(self, i):
-        path_scalar_img = df["scalar"][i]
-        path_label_img = df["label"][i]
+        path_scalar_img = self.df["scalar"][i]
+        path_label_img = self.df["label"][i]
         scalar_img = load_scalar(path_scalar_img)
         label_img = load_label(path_label_img, self.n_classes)
         p0 = np.array([random.randint(0, len_max - len_) for len_max, len_ in zip(scalar_img.shape, self.shape)])
@@ -59,11 +59,11 @@ def load_nifti(filename):
 
 
 def one_hot_encode(label, n_classes):
-    return np.identity(n_classes)[label]
+    return np.eye(n_classes, dtype=np.int32)[label]
 
 
 def load_scalar(filename):
-    return load_nifti(filename).astype(np.float) / 255
+    return load_nifti(filename).astype(np.float32) / 255
 
 
 def load_label(filename, n_classes):
