@@ -27,7 +27,8 @@ def main():
         "--input_shape", type=int, nargs='*', action="store",
         default=[80, 80, 80],
         help="shape of input for the network")
-    parser.add_argument('--out', '-o', default='result',
+    parser.add_argument(
+        '--out', '-o', default='result',
         help='Directory to output the result')
 
     args = parser.parse_args()
