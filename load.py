@@ -37,7 +37,7 @@ class DatasetFromFiles(chainer.dataset.DatasetMixin):
         scalar_patch = extract_patch(scalar_img, p0, p1)
         label_patch = extract_patch(label_img, p0, p1)
 
-        return np.expand_dims(scalar_patch, 0), label_patch.reshape(-1, self.n_classes)
+        return np.expand_dims(scalar_patch, 0), label_patch.transpose(3, 0, 1, 2)
 
 
 def load_nifti(filename):

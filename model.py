@@ -71,7 +71,8 @@ class VoxResNet(chainer.Chain):
         """
         h = self.conv1a(x)
         h = F.relu(self.bnorm1a(h, test=not self.train))
-        h1 = self.conv1b(h)
+        h = self.conv1b(h)
+        c1 = self.deconv1(h)
         # h = F.relu(self.bnorm1b(h1, test=not self.train))
         # h = self.conv1c(h)
         # h = self.voxres2(h, self.train)
@@ -84,6 +85,5 @@ class VoxResNet(chainer.Chain):
         # h = self.conv7(h)
         # h = self.voxres8(h, self.train)
         # h4 = self.voxres9(h, self.train)
-
-        c1 = self.deconv1(h1)
-        return F.reshape(F.transpose(c1, (0, 2, 3, 4, 1)), (-1, self.n_classes))
+        return c1
+        # return F.reshape(F.transpose(c1, (0, 2, 3, 4, 1)), (-1, self.n_classes))
