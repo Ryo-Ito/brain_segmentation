@@ -29,6 +29,7 @@ def main():
         help="shape of input for the network")
 
     args = parser.parse_args()
+    print(args)
     train_df = pd.read_csv(args.input)
 
     vrn = VoxResNet(n_class=4)
