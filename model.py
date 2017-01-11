@@ -30,8 +30,8 @@ class VoxResModule(chainer.Chain):
 
 class VoxResNet(chainer.Chain):
     """Voxel Residual Network"""
-    def __init__(self, n_class=4):
-        self.n_class = n_class
+    def __init__(self, n_classes=4):
+        self.n_classes = n_classes
         super(VoxResNet, self).__init__(
             conv1a=L.ConvolutionND(3, 1, 32, 3, pad=1),
             bnorm1a=L.BatchNormalization(32),
@@ -66,7 +66,7 @@ class VoxResNet(chainer.Chain):
 
         Returns
         -------
-        logit [sample_size, 4, xlen, ylen, zlen]
+        logit [sample_size, n_classes, xlen, ylen, zlen]
             logit to be passed to softmax activation
         """
         h = self.conv1a(x)
@@ -86,4 +86,4 @@ class VoxResNet(chainer.Chain):
         # h4 = self.voxres9(h, self.train)
 
         c1 = self.deconv1(h1)
-        return c1
+        return F.reshape(F.transpose(c1, (0, 2, 3, 4, 1)), (-1, self.n_classes))
