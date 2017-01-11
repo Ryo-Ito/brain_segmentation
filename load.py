@@ -30,14 +30,14 @@ class DatasetFromFiles(chainer.dataset.DatasetMixin):
         path_scalar_img = self.df["scalar"][i]
         path_label_img = self.df["label"][i]
         scalar_img = load_scalar(path_scalar_img)
-        label_img = load_label(path_label_img, self.n_classes)
+        label_img = load_nifti(path_label_img).astype(np.int32)
         p0 = np.array([random.randint(0, len_max - len_) for len_max, len_ in zip(scalar_img.shape, self.shape)])
         p1 = p0 + self.shape
 
         scalar_patch = extract_patch(scalar_img, p0, p1)
         label_patch = extract_patch(label_img, p0, p1)
 
-        return np.expand_dims(scalar_patch, 0), label_patch.transpose(3, 0, 1, 2)
+        return np.expand_dims(scalar_patch, 0), label_patch
 
 
 def load_nifti(filename):
