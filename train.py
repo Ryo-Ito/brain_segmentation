@@ -48,7 +48,7 @@ def main():
     optimizer.setup(vrn)
     optimizer.add_hook(chainer.optimizer.WeightDecay(0.0005))
 
-    for i in range(args.epoch):
+    for i in range(args.iteration):
         vrn.cleargrads()
         scalar_img, label_img = load.sample(train_df, args.n_batch, args.shape)
         x_train = Variable(xp.asarray(scalar_img))
@@ -61,7 +61,8 @@ def main():
         accuracy = F.accuracy(outputs[-1], y_train)
         loss.backward()
         optimizer.update()
-        print("step %5d, accuracy_c1 %.02f, accuracy %.02f, cost %f" % (i, accuracy_c1.data, accuracy.data, loss.data))
+        if i % args.display_step == 0:
+            print("step %5d, accuracy_c1 %.02f, accuracy %.02f, cost %f" % (i, accuracy_c1.data, accuracy.data, loss.data))
 
     vrn.to_cpu()
     chainer.serializers.save_npz(args.out, vrn)
