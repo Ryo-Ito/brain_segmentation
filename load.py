@@ -63,7 +63,10 @@ def one_hot_encode(label, n_classes):
 
 
 def load_scalar(filename):
-    return load_nifti(filename).astype(np.float32) / 255
+    img = load_nifti(filename).astype(np.float32)
+    mean = np.mean(img)
+    var = np.var(img)
+    return (img - mean) / var
 
 
 def load_label(filename, n_classes):
@@ -93,19 +96,22 @@ def sample(df, n, shape):
     N = len(df)
     assert N >= n
     indices = np.random.choice(N, n, replace=False)
-    img_files = df["image"][indices]
+    scalar_files = df["scalar"][indices]
     label_files = df["label"][indices]
-    imgs = []
+    scalars = []
     labels = []
-    for img_file, label_file in zip(img_files, label_files):
-        img = load_img(img_file)
-        label = load_label(label_file)
-        ps = np.array([random.randint(0, len_max - len_) for len_, len_max in zip(shape, img.shape)])
-        imgs.append(extract_patch(img, ps, [p + len_ for p, len_ in zip(ps, shape)]))
-        labels.append(extract_patch(label, ps, [p + len_ for p, len_ in zip(ps, shape)]))
-    imgs = np.array(imgs)
+    for scalar_file, label_file in zip(scalar_files, label_files):
+        scalar_img = load_scalar(scalar_file)
+        label_img = load_nifti(label_file).astype(np.int32)
+        p0 = np.array([random.randint(0, len_max - len_) for len_max, len_ in zip(scalar_img.shape, shape)])
+        p1 = p0 + shape
+        scalar_patch = extract_patch(scalar_img, p0, p1)
+        label_patch = extract_patch(label_img, p0, p1)
+        scalars.append(scalar_patch)
+        labels.append(label_patch)
+    scalars = np.array(scalars)
     labels = np.array(labels)
-    return np.expand_dims(imgs, -1), labels
+    return np.expand_dims(scalars, 1), labels
 
 
 if __name__ == '__main__':
