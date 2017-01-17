@@ -15,27 +15,36 @@ def main():
     parser = argparse.ArgumentParser(description="train VoxResNet")
     parser.add_argument(
         "--iteration", "-i", default=100000, type=int,
-        help="number of iterations")
+        help="number of iterations, default=100000")
     parser.add_argument(
-        "--display_step", "-s", default=1000, type=int, help="number of steps to display")
+        "--display_step", "-s", default=1000, type=int,
+        help="number of steps to display, default=1000")
     parser.add_argument(
         "--gpu", "-g", default=-1, type=int,
-        help="negative value indicates no gpu")
+        help="negative value indicates no gpu, default=-1")
     parser.add_argument(
-        "--input", type=str, default="dataset_train.csv",
-        help="csv file containing filename of image and its label")
-    parser.add_argument("--n_batch", type=int, default=1, help="batch size")
+        "--input_file", "-f", type=str, default="dataset_train.csv",
+        help="csv file containing filename of image and its label, default=dataset_train.csv")
+    parser.add_argument(
+        "--n_batch", type=int, default=1,
+        help="batch size, default=1")
     parser.add_argument(
         "--shape", type=int, nargs='*', action="store",
         default=[80, 80, 80],
-        help="shape of input for the network")
+        help="shape of input for the network, default=[80, 80, 80]")
     parser.add_argument(
         '--out', '-o', default='vrn.npz', type=str,
-        help='trained model')
+        help='trained model, default=vrn.npz')
+    parser.add_argument(
+        "--learning_rate", "-r", default=1e-5, type=float,
+        help="update rate, default=1e-5")
+    parser.add_argument(
+        "--weight_decay", "-w", default=0.0005, type=float,
+        help="coefficient of l2norm weight penalty")
 
     args = parser.parse_args()
     print(args)
-    train_df = pd.read_csv(args.input)
+    train_df = pd.read_csv(args.input_file)
 
     vrn = VoxResNet(n_classes=4)
     if args.gpu >= 0:
@@ -43,10 +52,10 @@ def main():
         vrn.to_gpu()
     xp = cuda.cupy if args.gpu >= 0 else np
 
-    optimizer = chainer.optimizers.Adam(eps=1e-5)
+    optimizer = chainer.optimizers.Adam(eps=args.learning_rate)
     optimizer.use_cleargrads()
     optimizer.setup(vrn)
-    optimizer.add_hook(chainer.optimizer.WeightDecay(0.0005))
+    optimizer.add_hook(chainer.optimizer.WeightDecay(args.weight_decay))
 
     for i in range(args.iteration):
         vrn.cleargrads()
