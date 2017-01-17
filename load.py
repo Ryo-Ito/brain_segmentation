@@ -97,16 +97,22 @@ def sample(df, n, shape):
     assert N >= n
     indices = np.random.choice(N, n, replace=False)
     scalar_files = df["scalar"][indices]
-    label_files = df["label"][indices]
+    label_files = df["segTRI"][indices]
+    mask_files = df["mask"][indices]
     scalars = []
     labels = []
-    for scalar_file, label_file in zip(scalar_files, label_files):
+    for scalar_file, label_file, mask_file in zip(scalar_files, label_files, mask_files):
         scalar_img = load_scalar(scalar_file)
         label_img = load_nifti(label_file).astype(np.int32)
-        p0 = np.array([random.randint(0, len_max - len_) for len_max, len_ in zip(scalar_img.shape, shape)])
-        p1 = p0 + shape
-        scalar_patch = extract_patch(scalar_img, p0, p1)
-        label_patch = extract_patch(label_img, p0, p1)
+        mask_img = load_nifti(mask_file)
+        slices = [slice(len_ / 2, -len_ / 2) for len_ in shape]
+        mask_img[slices] *= 2
+        indices = np.where(mask_img > 1.5)
+        i = np.random.choice(len(indices[0]))
+        begin = np.array([index[i] - len_ / 2 for index, len_ in zip(indices, shape)])
+        end = begin + shape
+        scalar_patch = extract_patch(scalar_img, begin, end)
+        label_patch = extract_patch(label_img, begin, end)
         scalars.append(scalar_patch)
         labels.append(label_patch)
     scalars = np.array(scalars)
