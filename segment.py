@@ -39,19 +39,20 @@ def main():
     if args.gpu >= 0:
         cuda.get_device(args.gpu).use()
         vrn.to_gpu()
-    xp = cuda.cupy if args.gpu > 0 else np
+    xp = cuda.cupy if args.gpu >= 0 else np
 
     scalar_img = load_scalar(args.input)
+    nifti_img = nib.load(args.input)
     start = [img_len / 2 - patch_len / 2 for img_len, patch_len in zip(scalar_img.shape, args.shape)]
     end = [patch_len + s for patch_len, s in zip(args.shape, start)]
     scalar_patch = extract_patch(scalar_img, start, end)
-    scalar_patch = np.reshape(scalar_patch, (1, 1) + args.shape)
+    scalar_patch = np.reshape(scalar_patch, [1, 1] + args.shape)
 
     x = Variable(xp.asarray(scalar_patch))
     output = vrn(x)
-    y = np.argmax(output.data, axis=1)
+    y = np.argmax(output[-1].data, axis=1)
 
-    nib.save(nib.Nifti1Image(y[0], np.eye(4)), args.output)
+    nib.save(nib.Nifti1Image(np.pad(cuda.to_cpu(y[0]), ((88,), (24,), (88,)), mode="constant"), nifti_img.affine), args.output)
 
 
 if __name__ == '__main__':
