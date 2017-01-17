@@ -24,7 +24,7 @@ def main():
     parser.add_argument(
         "--input", type=str, default="dataset_train.csv",
         help="csv file containing filename of image and its label")
-    parser.add_argument("--n_batch", type=int, default=5, help="batch size")
+    parser.add_argument("--n_batch", type=int, default=1, help="batch size")
     parser.add_argument(
         "--shape", type=int, nargs='*', action="store",
         default=[80, 80, 80],
