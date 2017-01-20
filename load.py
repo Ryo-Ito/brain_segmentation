@@ -1,8 +1,6 @@
 import random
 import nibabel as nib
 import numpy as np
-from skimage import exposure
-import SimpleITK as sitk
 import chainer
 
 
@@ -71,24 +69,6 @@ def load_scalar(filename):
     return (img - mean) / var
 
 
-def load_scalar_HE(filename):
-    img = load_nifti(filename)
-    img = exposure.equalize_hist(img)
-    mean = np.mean(img)
-    var = np.var(img)
-    return ((img - mean) / var).astype(np.float32)
-
-
-def load_scalar_AHE(filename):
-    img = sitk.ReadImage(filename)
-    img = sitk.AdaptiveHistogramEqualization(img)
-    img = sitk.GetArrayFromImage(img)
-    img = np.squeeze(img)
-    mean = np.mean(img)
-    var = np.var(img)
-    return ((img - mean) / var).astype(np.float32)
-
-
 def load_label(filename, n_classes):
     return one_hot_encode(load_nifti(filename).astype(np.int), n_classes)
 
@@ -116,13 +96,13 @@ def sample(df, n, shape):
     N = len(df)
     assert N >= n
     indices = np.random.choice(N, n, replace=False)
-    scalar_files = df["scalar"][indices]
+    scalar_files = df["AHE"][indices]
     label_files = df["segTRI"][indices]
     mask_files = df["mask"][indices]
     scalars = []
     labels = []
     for scalar_file, label_file, mask_file in zip(scalar_files, label_files, mask_files):
-        scalar_img = load_scalar_HE(scalar_file)
+        scalar_img = load_scalar(scalar_file)
         label_img = load_nifti(label_file).astype(np.int32)
         mask_img = load_nifti(mask_file)
         slices = [slice(len_ / 2, -len_ / 2) for len_ in shape]
