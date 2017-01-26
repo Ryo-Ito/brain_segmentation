@@ -36,11 +36,11 @@ def main():
         '--out', '-o', default='vrn.npz', type=str,
         help='trained model, default=vrn.npz')
     parser.add_argument(
-        "--learning_rate", "-r", default=1e-5, type=float,
-        help="update rate, default=1e-5")
+        "--learning_rate", "-r", default=1e-3, type=float,
+        help="update rate, default=1e-3")
     parser.add_argument(
         "--weight_decay", "-w", default=0.0005, type=float,
-        help="coefficient of l2norm weight penalty")
+        help="coefficient of l2norm weight penalty, default=0.0005")
 
     args = parser.parse_args()
     print(args)
@@ -52,7 +52,7 @@ def main():
         vrn.to_gpu()
     xp = cuda.cupy if args.gpu >= 0 else np
 
-    optimizer = chainer.optimizers.Adam(eps=args.learning_rate)
+    optimizer = chainer.optimizers.Adam(alpha=args.learning_rate)
     optimizer.use_cleargrads()
     optimizer.setup(vrn)
     optimizer.add_hook(chainer.optimizer.WeightDecay(args.weight_decay))
