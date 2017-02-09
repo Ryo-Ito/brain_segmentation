@@ -46,7 +46,7 @@ def main():
     print(args)
     train_df = pd.read_csv(args.input_file)
 
-    vrn = VoxResNet(n_classes=4)
+    vrn = VoxResNet(in_channels=2, n_classes=4)
     if args.gpu >= 0:
         chainer.cuda.get_device(args.gpu).use()  # Make a specified GPU current
         vrn.to_gpu()
@@ -60,6 +60,7 @@ def main():
     for i in range(args.iteration):
         vrn.cleargrads()
         scalar_img, label_img = load.sample(train_df, args.n_batch, args.shape)
+        assert label_img.shape == (args.n_batch,) + tuple(args.shape), label_img.shape
         x_train = Variable(xp.asarray(scalar_img))
         y_train = Variable(xp.asarray(label_img))
         outputs = vrn(x_train, train=True)
@@ -71,7 +72,7 @@ def main():
         loss.backward()
         optimizer.update()
         if i % args.display_step == 0:
-            print("step %5d, accuracy_c1 %.02f, accuracy %.02f, cost %f" % (i, accuracy_c1.data, accuracy.data, loss.data))
+            print("step %5d, accuracy_c1 %.02f, accuracy %.02f, cost %g" % (i, accuracy_c1.data, accuracy.data, loss.data))
 
     vrn.to_cpu()
     chainer.serializers.save_npz(args.out, vrn)
