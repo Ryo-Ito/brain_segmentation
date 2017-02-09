@@ -2,22 +2,28 @@ import nibabel as nib
 import numpy as np
 
 
-def load_nifti(filename):
+def load_nifti(filename, with_affine=False):
     """
     load image from NIFTI file
     Parameters
     ----------
     filename : str
         filename of NIFTI file
+    with_affine : bool
+        if True, returns affine parameters
+
     Returns
     -------
-    img : np.ndarray
+    data : np.ndarray
         image data
     """
-    img = nib.load(filename).get_data()
-    img = np.squeeze(img)
-    img = np.copy(img, order='C')
-    return img
+    img = nib.load(filename)
+    data = img.get_data()
+    data = np.squeeze(data)
+    data = np.copy(data, order="C")
+    if with_affine:
+        return data, img.affine
+    return data
 
 
 def sample(df, n, shape):
