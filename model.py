@@ -31,10 +31,10 @@ class VoxResModule(chainer.Chain):
 
 class VoxResNet(chainer.Chain):
     """Voxel Residual Network"""
-    def __init__(self, n_classes=4):
+    def __init__(self, in_channels=1, n_classes=4):
         init = chainer.initializers.HeNormal(scale=0.01)
         super(VoxResNet, self).__init__(
-            conv1a=L.ConvolutionND(3, 1, 32, 3, pad=1, initialW=init),
+            conv1a=L.ConvolutionND(3, in_channels, 32, 3, pad=1, initialW=init),
             bnorm1a=L.BatchNormalization(32),
             conv1b=L.ConvolutionND(3, 32, 32, 3, pad=1, initialW=init),
             bnorm1b=L.BatchNormalization(32),
@@ -101,4 +101,7 @@ class VoxResNet(chainer.Chain):
         c4 = self.c4conv(c4)
 
         c = c1 + c2 + c3 + c4
-        return (c1, c2, c3, c4, c)
+        if train:
+            return (c1, c2, c3, c4, c)
+        else:
+            return c
