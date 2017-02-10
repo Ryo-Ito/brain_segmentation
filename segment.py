@@ -17,7 +17,7 @@ def main():
         help="brain image to segment")
     parser.add_argument(
         "--in_channels", type=int, default=2,
-        help="number of input image channels")
+        help="number of input image channels, default=2")
     parser.add_argument(
         "--n_classes", "-c", type=int, default=4,
         help="number of classes, default=4")

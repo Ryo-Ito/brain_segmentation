@@ -65,12 +65,12 @@ class VoxResNet(chainer.Chain):
 
         Parameters
         ----------
-        x : [sample_size, 1, xlen, ylen, zlen]
+        x : [sample_size, in_channels, xlen, ylen, zlen]
             image to perform semantic segmentation
 
         Returns
         -------
-        logit [sample_size, n_classes, xlen, ylen, zlen]
+        logit [sample_size, xlen, ylen, zlen]
             logit to be passed to softmax activation
         """
         h = self.conv1a(x)
