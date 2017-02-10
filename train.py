@@ -26,6 +26,12 @@ def main():
         "--input_file", "-f", type=str, default="dataset_train.csv",
         help="csv file containing filename of image and its label, default=dataset_train.csv")
     parser.add_argument(
+        "--in_channels", type=int, default=2,
+        help="number of input image channels, default=2")
+    parser.add_argument(
+        "--n_classes", type=int, default=4,
+        help="number of output classes, default=4")
+    parser.add_argument(
         "--n_batch", type=int, default=1,
         help="batch size, default=1")
     parser.add_argument(
@@ -46,7 +52,7 @@ def main():
     print(args)
     train_df = pd.read_csv(args.input_file)
 
-    vrn = VoxResNet(in_channels=2, n_classes=4)
+    vrn = VoxResNet(in_channels=args.in_channels, n_classes=args.n_classes)
     if args.gpu >= 0:
         chainer.cuda.get_device(args.gpu).use()  # Make a specified GPU current
         vrn.to_gpu()
@@ -60,6 +66,7 @@ def main():
     for i in range(args.iteration):
         vrn.cleargrads()
         scalar_img, label_img = load.sample(train_df, args.n_batch, args.shape)
+        assert np.max(label_img) < args.n_classes
         assert label_img.shape == (args.n_batch,) + tuple(args.shape), label_img.shape
         x_train = Variable(xp.asarray(scalar_img))
         y_train = Variable(xp.asarray(label_img))
