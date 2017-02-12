@@ -54,6 +54,9 @@ def sample(df, n, shape):
     labels = []
     for scalar_file, label_file, mask_file in zip(scalar_files, label_files, mask_files):
         scalar_img = load_nifti(scalar_file)
+        if scalar_img.ndim == 3:
+            scalar_img = (scalar_img - np.mean(scalar_img)) / np.std(scalar_img)
+            scalar_img = scalar_img[:, :, :, None].astype(np.float32)
         label_img = load_nifti(label_file).astype(np.int32)
         mask_img = load_nifti(mask_file)
         slices = [slice(len_ / 2, -len_ / 2) for len_ in shape]
