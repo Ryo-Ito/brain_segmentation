@@ -14,8 +14,8 @@ from model import VoxResNet
 def main():
     parser = argparse.ArgumentParser(description="train VoxResNet")
     parser.add_argument(
-        "--iteration", "-i", default=100000, type=int,
-        help="number of iterations, default=100000")
+        "--iteration", "-i", default=10000, type=int,
+        help="number of iterations, default=10000")
     parser.add_argument(
         "--display_step", "-s", default=1000, type=int,
         help="number of steps to display, default=1000")
