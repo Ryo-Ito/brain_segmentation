@@ -2,6 +2,8 @@
 
 This is a repository containing code of Deep Voxelwise Residual Networks for Volumetric Brain Segmentation (VoxResNet) [1]
 
+Note that this is not an official implementation
+
 
 # Reference
 
