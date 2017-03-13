@@ -85,7 +85,7 @@ def main():
         dataset_list.append(filedict)
     dataset["data"] = dataset_list
 
-    with open(args.output_csv, "w") as f:
+    with open(args.output_json, "w") as f:
         json.dump(dataset, f)
 
 
