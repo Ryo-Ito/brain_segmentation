@@ -5,8 +5,18 @@ This is a repository containing code of Deep Voxelwise Residual Networks for Vol
 Note that this is not an official implementation.
 
 
+# Requirements
+- python 2.7
+- chainer
+- dipy
+- nibabel
+- numpy
+- pandas
+- SimpleITK
+
+
 # Preparing dataset
-1. Download [Internet Brain Segmentation Repository (IBSR)](https://www.nitrc.org/frs/download.php/5731/IBSR_V2.0_nifti_stripped.tgz) or other dataset you want to try
+1. Download [Internet Brain Segmentation Repository (IBSR)](https://www.nitrc.org/frs/download.php/5731/IBSR_V2.0_nifti_stripped.tgz) (or other dataset you want to try)
 2. preprocess dataset
   - training dataset  
   `$ python preprocess.py -i /path/to/IBSR/dataset -s IBSR_01 IBSR_02 IBSR_03 IBSR_04 IBSR_05 -o ./preprocessed -f dataset_train.json`
