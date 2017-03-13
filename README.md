@@ -1,8 +1,13 @@
 # Implementation of VoxResNet
 
-This is a repository containing code of Deep Voxelwise Residual Networks for Volumetric Brain Segmentation (VoxResNet) [1]
+This is a repository containing code of Deep Voxelwise Residual Networks for Volumetric Brain Segmentation (VoxResNet) [1].
 
-Note that this is not an official implementation
+Note that this is not an official implementation.
+
+
+# Dataset
+
+$ python preprocess.py -i /path/to/dataset -s folders -o /path/to/preprocessed/dataset
 
 
 # Reference
