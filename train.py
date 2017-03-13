@@ -62,8 +62,6 @@ def main():
     for i in range(args.iteration):
         vrn.cleargrads()
         image, label = load.sample(train_df, args.n_batch, args.shape)
-        assert np.max(label) < args.n_classes
-        assert label.shape == (args.n_batch,) + tuple(args.shape), label.shape
         x_train = xp.asarray(image)
         y_train = xp.asarray(label)
         logits = vrn(x_train, train=True)
