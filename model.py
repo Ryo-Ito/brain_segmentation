@@ -13,11 +13,12 @@ class VoxResModule(chainer.Chain):
     Conv 64, 3x3x3
     output
     """
-    def __init__(self, in_channels):
+
+    def __init__(self):
         init = chainer.initializers.HeNormal(scale=0.01)
         super(VoxResModule, self).__init__(
-            bnorm1=L.BatchNormalization(size=in_channels),
-            conv1=L.ConvolutionND(3, in_channels, 64, 3, pad=1, initialW=init),
+            bnorm1=L.BatchNormalization(size=64),
+            conv1=L.ConvolutionND(3, 64, 64, 3, pad=1, initialW=init),
             bnorm2=L.BatchNormalization(size=64),
             conv2=L.ConvolutionND(3, 64, 64, 3, pad=1, initialW=init))
 
@@ -31,6 +32,7 @@ class VoxResModule(chainer.Chain):
 
 class VoxResNet(chainer.Chain):
     """Voxel Residual Network"""
+
     def __init__(self, in_channels=1, n_classes=4):
         init = chainer.initializers.HeNormal(scale=0.01)
         super(VoxResNet, self).__init__(
@@ -65,13 +67,14 @@ class VoxResNet(chainer.Chain):
 
         Parameters
         ----------
-        x : [sample_size, in_channels, xlen, ylen, zlen]
+        x : (batch_size, in_channels, xlen, ylen, zlen) ndarray
             image to perform semantic segmentation
 
         Returns
         -------
-        logit [sample_size, xlen, ylen, zlen]
-            logit to be passed to softmax activation
+        proba: (batch_size, n_classes, xlen, ylen, zlen) ndarray
+            probability of each voxel belonging each class
+            elif train=True, returns tuple of logits
         """
         h = self.conv1a(x)
         h = F.relu(self.bnorm1a(h, test=not train))
@@ -104,4 +107,4 @@ class VoxResNet(chainer.Chain):
         if train:
             return (c1, c2, c3, c4, c)
         else:
-            return c
+            return F.softmax(c)

@@ -1,11 +1,9 @@
-from __future__ import print_function
 import argparse
-import pandas as pd
-import numpy as np
-
 import chainer
-from chainer import cuda, Variable
 import chainer.functions as F
+import json
+import numpy as np
+import pandas as pd
 
 import load
 from model import VoxResNet
@@ -23,14 +21,8 @@ def main():
         "--gpu", "-g", default=-1, type=int,
         help="negative value indicates no gpu, default=-1")
     parser.add_argument(
-        "--input_file", "-f", type=str, default="dataset_train.csv",
-        help="csv file containing filename of image and its label, default=dataset_train.csv")
-    parser.add_argument(
-        "--in_channels", type=int, default=2,
-        help="number of input image channels, default=2")
-    parser.add_argument(
-        "--n_classes", type=int, default=4,
-        help="number of output classes, default=4")
+        "--input_file", "-f", type=str, default="dataset.json",
+        help="json file of traininig dataset, default=dataset.json")
     parser.add_argument(
         "--n_batch", type=int, default=1,
         help="batch size, default=1")
@@ -40,23 +32,27 @@ def main():
         help="shape of input for the network, default=[80, 80, 80]")
     parser.add_argument(
         '--out', '-o', default='vrn.npz', type=str,
-        help='trained model, default=vrn.npz')
+        help='parameters of trained model, default=vrn.npz')
     parser.add_argument(
         "--learning_rate", "-r", default=1e-3, type=float,
         help="update rate, default=1e-3")
     parser.add_argument(
         "--weight_decay", "-w", default=0.0005, type=float,
         help="coefficient of l2norm weight penalty, default=0.0005")
-
     args = parser.parse_args()
     print(args)
-    train_df = pd.read_csv(args.input_file)
 
-    vrn = VoxResNet(in_channels=args.in_channels, n_classes=args.n_classes)
+    with open(args.input_file) as f:
+        dataset = json.load(f)
+    train_df = pd.DataFrame(dataset["data"])
+
+    vrn = VoxResNet(dataset["in_channels"], dataset["n_classes"])
     if args.gpu >= 0:
-        chainer.cuda.get_device(args.gpu).use()  # Make a specified GPU current
+        chainer.cuda.get_device(args.gpu).use()
         vrn.to_gpu()
-    xp = cuda.cupy if args.gpu >= 0 else np
+        xp = chainer.cuda.cupy
+    else:
+        xp = np
 
     optimizer = chainer.optimizers.Adam(alpha=args.learning_rate)
     optimizer.use_cleargrads()
@@ -65,21 +61,22 @@ def main():
 
     for i in range(args.iteration):
         vrn.cleargrads()
-        scalar_img, label_img = load.sample(train_df, args.n_batch, args.shape)
-        assert np.max(label_img) < args.n_classes
-        assert label_img.shape == (args.n_batch,) + tuple(args.shape), label_img.shape
-        x_train = Variable(xp.asarray(scalar_img))
-        y_train = Variable(xp.asarray(label_img))
-        outputs = vrn(x_train, train=True)
+        image, label = load.sample(train_df, args.n_batch, args.shape)
+        assert np.max(label) < args.n_classes
+        assert label.shape == (args.n_batch,) + tuple(args.shape), label.shape
+        x_train = xp.asarray(image)
+        y_train = xp.asarray(label)
+        logits = vrn(x_train, train=True)
         loss = 0
-        for out in outputs:
-            loss += F.softmax_cross_entropy(out, y_train)
-        accuracy_c1 = F.accuracy(outputs[0], y_train)
-        accuracy = F.accuracy(outputs[-1], y_train)
+        for logit in logits:
+            loss += F.softmax_cross_entropy(logit, y_train)
         loss.backward()
         optimizer.update()
         if i % args.display_step == 0:
-            print("step %5d, accuracy_c1 %.02f, accuracy %.02f, cost %g" % (i, accuracy_c1.data, accuracy.data, loss.data))
+            accuracy_c1 = F.accuracy(logits[0], y_train)
+            accuracy = F.accuracy(logits[-1], y_train)
+            print("step %5d, accuracy_c1 %.02f, accuracy %.02f, cost %g" % (
+                i, accuracy_c1.data, accuracy.data, loss.data))
 
     vrn.to_cpu()
     chainer.serializers.save_npz(args.out, vrn)
