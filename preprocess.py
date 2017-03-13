@@ -23,13 +23,15 @@ def preprocess(inputfile, outputfile, order=0):
         data = np.squeeze(data)
         assert data.ndim == 3, data.ndim
     else:
-        data = np.float32(data)
         img = sitk.GetImageFromArray(np.squeeze(data))
         img = sitk.AdaptiveHistogramEqualization(img)
         data_clahe = sitk.GetArrayFromImage(img)[:, :, :, None]
         data = np.concatenate((data_clahe, data), 3)
         data = (data - np.mean(data, (0, 1, 2))) / np.std(data, (0, 1, 2))
         assert data.ndim == 4, data.ndim
+        assert np.allclose(np.mean(data, (0, 1, 2)), 0.), np.mean(data, (0, 1, 2))
+        assert np.allclose(np.std(data, (0, 1, 2)), 1.), np.std(data, (0, 1, 2))
+        data = np.float32(data)
     img = nib.Nifti1Image(data, affine)
     nib.save(img, outputfile)
 
