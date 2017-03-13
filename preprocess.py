@@ -1,5 +1,5 @@
 import argparse
-import csv
+import json
 import os
 
 from dipy.align.reslice import reslice
@@ -52,13 +52,12 @@ def main():
         "--output_directory", "-o", type=str,
         help="directory of preprocessed dataset")
     parser.add_argument(
-        "--output_csv", type=str, default="dataset.csv",
-        help="csv file of preprocessed dataset, default=dataset.csv")
+        "--output_json", type=str, default="dataset.json",
+        help="json file of preprocessed dataset, default=dataset.json")
     args = parser.parse_args()
 
-    f = open(args.output_csv, "w")
-    csvwriter = csv.writer(f)
-    csvwriter.writerow(["subject", "image", "label"])
+    dataset = {"in_channels": 2, "n_classes": 4}
+    dataset_list = []
 
     if not os.path.exists(args.output_directory):
         os.makedirs(args.output_directory)
@@ -66,11 +65,11 @@ def main():
         output_folder = os.path.join(args.output_directory, subject)
         if not os.path.exists(output_folder):
             os.makedirs(output_folder)
-        filelist = [subject]
+        filedict = {"subject": subject}
 
         filename = subject + args.image_suffix
         outputfile = os.path.join(output_folder, filename)
-        filelist.append(outputfile)
+        filedict["image"] = outputfile
         preprocess(
             os.path.join(args.input_directory, subject, filename),
             outputfile,
@@ -78,14 +77,16 @@ def main():
 
         filename = subject + args.label_suffix
         outputfile = os.path.join(output_folder, filename)
-        filelist.append(outputfile)
+        filedict["label"] = outputfile
         preprocess(
             os.path.join(args.input_directory, subject, filename),
             outputfile,
             order=0)
+        dataset_list.append(filedict)
+    dataset["data"] = dataset_list
 
-        csvwriter.writerow(filelist)
-    f.close()
+    with open(args.output_csv, "w") as f:
+        json.dump(dataset, f)
 
 
 if __name__ == '__main__':
