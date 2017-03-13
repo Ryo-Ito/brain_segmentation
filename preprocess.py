@@ -54,7 +54,7 @@ def main():
         "--output_directory", "-o", type=str,
         help="directory of preprocessed dataset")
     parser.add_argument(
-        "--output_json", type=str, default="dataset.json",
+        "--output_file", "-f", type=str, default="dataset.json",
         help="json file of preprocessed dataset, default=dataset.json")
     args = parser.parse_args()
 
@@ -87,7 +87,7 @@ def main():
         dataset_list.append(filedict)
     dataset["data"] = dataset_list
 
-    with open(args.output_json, "w") as f:
+    with open(args.output_file, "w") as f:
         json.dump(dataset, f)
 
 
