@@ -15,7 +15,6 @@ Note that this is not an official implementation.
 
 
 # Training VoxResNet
-Training simply runs by  
 `$ python train.py -g 0 -f dataset_train.json`
 
 
