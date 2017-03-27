@@ -18,15 +18,16 @@ def preprocess(inputfile, outputfile, order=0):
     affine = img.affine
     zoom = img.header.get_zooms()[:3]
     data, affine = reslice(data, affine, zoom, (1., 1., 1.), order)
+    data = np.squeeze(data)
+    data = np.pad(data, [(0, 256 - len_) for len_ in data.shape], "constant")
     if order == 0:
         data = np.int32(data)
-        data = np.squeeze(data)
         assert data.ndim == 3, data.ndim
     else:
-        img = sitk.GetImageFromArray(np.squeeze(data))
+        img = sitk.GetImageFromArray(np.copy(data))
         img = sitk.AdaptiveHistogramEqualization(img)
         data_clahe = sitk.GetArrayFromImage(img)[:, :, :, None]
-        data = np.concatenate((data_clahe, data), 3)
+        data = np.concatenate((data_clahe, data[:, :, :, None]), 3)
         data = (data - np.mean(data, (0, 1, 2))) / np.std(data, (0, 1, 2))
         assert data.ndim == 4, data.ndim
         assert np.allclose(np.mean(data, (0, 1, 2)), 0.), np.mean(data, (0, 1, 2))
