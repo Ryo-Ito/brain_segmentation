@@ -25,7 +25,7 @@ class VoxResModule(chainer.Chain):
     def __call__(self, x, train):
         h = F.relu(self.bnorm1(x, test=not train))
         h = self.conv1(h)
-        h = F.relu(self.bnorm2(x, test=not train))
+        h = F.relu(self.bnorm2(h, test=not train))
         h = self.conv2(h)
         return h + x
 

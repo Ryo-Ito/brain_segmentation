@@ -24,8 +24,12 @@ Note that this is not an official implementation.
   `$ python preprocess.py -i /path/to/IBSR/dataset -s IBSR_11 IBSR_12 IBSR_13 IBSR_14 IBSR_15 -o ./preprocessed -f dataset_test.json`
 
 
-# Training VoxResNet
+# Train VoxResNet
 `$ python train.py -g 0 -f dataset_train.json`
+
+
+# Test VoxResNet
+`$ python segment.py -g 0 -i dataset_test.json -m vrn.npz`
 
 
 # Reference
