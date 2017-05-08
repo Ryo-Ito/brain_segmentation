@@ -5,6 +5,8 @@ import os
 from dipy.align.reslice import reslice
 import nibabel as nib
 import numpy as np
+import pandas as pd
+from scipy.ndimage.filters import gaussian_filter
 import SimpleITK as sitk
 
 
@@ -12,7 +14,7 @@ def clahe(img):
     pass
 
 
-def preprocess(inputfile, outputfile, order=0):
+def preprocess(inputfile, outputfile, order=0, df=None):
     img = nib.load(inputfile)
     data = img.get_data()
     affine = img.affine
@@ -21,9 +23,13 @@ def preprocess(inputfile, outputfile, order=0):
     data = np.squeeze(data)
     data = np.pad(data, [(0, 256 - len_) for len_ in data.shape], "constant")
     if order == 0:
+        if df is not None:
+            for target, raw in zip(df["preprocessed"], df["raw"]):
+                data[np.where(data == raw)] = target
         data = np.int32(data)
         assert data.ndim == 3, data.ndim
     else:
+        data = data - gaussian_filter(data, sigma=1)
         img = sitk.GetImageFromArray(np.copy(data))
         img = sitk.AdaptiveHistogramEqualization(img)
         data_clahe = sitk.GetArrayFromImage(img)[:, :, :, None]
@@ -57,9 +63,20 @@ def main():
     parser.add_argument(
         "--output_file", "-f", type=str, default="dataset.json",
         help="json file of preprocessed dataset, default=dataset.json")
+    parser.add_argument(
+        "--label_file", "-l", type=str, default=None,
+        help="csv file with label translation rule, default=None")
+    parser.add_argument(
+        "--n_classes", type=int, default=4,
+        help="number of classes to classify")
     args = parser.parse_args()
 
-    dataset = {"in_channels": 2, "n_classes": 4}
+    if args.label_file is None:
+        df = None
+    else:
+        df = pd.read_csv(args.label_file)
+
+    dataset = {"in_channels": 2, "n_classes": args.n_classes}
     dataset_list = []
 
     if not os.path.exists(args.output_directory):
@@ -84,7 +101,8 @@ def main():
         preprocess(
             os.path.join(args.input_directory, subject, filename),
             outputfile,
-            order=0)
+            order=0,
+            df=df)
         dataset_list.append(filedict)
     dataset["data"] = dataset_list
 
