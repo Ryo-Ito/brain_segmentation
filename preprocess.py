@@ -29,8 +29,8 @@ def preprocess(inputfile, outputfile, order=0, df=None):
         data = np.int32(data)
         assert data.ndim == 3, data.ndim
     else:
-        data = data - gaussian_filter(data, sigma=1)
-        img = sitk.GetImageFromArray(np.copy(data))
+        data_sub = data - gaussian_filter(data, sigma=1)
+        img = sitk.GetImageFromArray(np.copy(data_sub))
         img = sitk.AdaptiveHistogramEqualization(img)
         data_clahe = sitk.GetArrayFromImage(img)[:, :, :, None]
         data = np.concatenate((data_clahe, data[:, :, :, None]), 3)
