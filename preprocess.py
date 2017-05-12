@@ -2,26 +2,17 @@ import argparse
 import json
 import os
 
-from dipy.align.reslice import reslice
+import cv2
 import nibabel as nib
 import numpy as np
 import pandas as pd
-from scipy.ndimage.filters import gaussian_filter
-import SimpleITK as sitk
 
 
-def clahe(img):
-    pass
-
-
-def preprocess(inputfile, outputfile, order=0, df=None):
+def preprocess(inputfile, outputfile, order=0, df=None, slice_axis=0):
     img = nib.load(inputfile)
     data = img.get_data()
     affine = img.affine
-    zoom = img.header.get_zooms()[:3]
-    data, affine = reslice(data, affine, zoom, (1., 1., 1.), order)
     data = np.squeeze(data)
-    data = np.pad(data, [(0, 256 - len_) for len_ in data.shape], "constant")
     if order == 0:
         if df is not None:
             for target, raw in zip(df["preprocessed"], df["raw"]):
@@ -29,15 +20,24 @@ def preprocess(inputfile, outputfile, order=0, df=None):
         data = np.int32(data)
         assert data.ndim == 3, data.ndim
     else:
-        data = data - gaussian_filter(data, sigma=1)
-        img = sitk.GetImageFromArray(np.copy(data))
-        img = sitk.AdaptiveHistogramEqualization(img)
-        data_clahe = sitk.GetArrayFromImage(img)[:, :, :, None]
-        data = np.concatenate((data_clahe, data[:, :, :, None]), 3)
-        data = (data - np.mean(data, (0, 1, 2))) / np.std(data, (0, 1, 2))
+        data = np.swapaxes(data, 0, slice_axis)
+        data_original = np.copy(data)
+        data = np.stack((data, data_original), axis=-1)
+        assert data.shape == data_original.shape + (2,), data.shape
+        clahe = cv2.createCLAHE(clipLimit=2., tileGridSize=(16, 16))
+        for i, slice_ in enumerate(data_original):
+            slice_ = (slice_ - slice_.mean()) / slice_.std()
+            slice_ = np.nan_to_num(slice_)
+            slice_sub = slice_ - cv2.GaussianBlur(slice_, (31, 31), 5)
+            slice_sub = (slice_sub - np.min(slice_sub)) / (np.max(slice_sub) - np.min(slice_sub))
+            slice_sub = np.array(slice_sub * 255, dtype=np.uint8)
+            slice_clahe = clahe.apply(slice_sub).astype(np.float)
+            slice_clahe = (slice_clahe - slice_clahe.mean()) / slice_clahe.std()
+            slice_clahe = np.nan_to_num(slice_clahe)
+            data[i, :, :, 0] = slice_clahe
+            data[i, :, :, 1] = slice_
+        data = np.swapaxes(data, 0, slice_axis)
         assert data.ndim == 4, data.ndim
-        assert np.allclose(np.mean(data, (0, 1, 2)), 0.), np.mean(data, (0, 1, 2))
-        assert np.allclose(np.std(data, (0, 1, 2)), 1.), np.std(data, (0, 1, 2))
         data = np.float32(data)
     img = nib.Nifti1Image(data, affine)
     nib.save(img, outputfile)
@@ -69,6 +69,9 @@ def main():
     parser.add_argument(
         "--n_classes", type=int, default=4,
         help="number of classes to classify")
+    parser.add_argument(
+        "--slice_axis", type=int, default=1,
+        help="index of axis to perform preprocessing")
     args = parser.parse_args()
 
     if args.label_file is None:
@@ -93,7 +96,8 @@ def main():
         preprocess(
             os.path.join(args.input_directory, subject, filename),
             outputfile,
-            order=1)
+            order=1,
+            slice_axis=args.slice_axis)
 
         filename = subject + args.label_suffix
         outputfile = os.path.join(output_folder, filename)
