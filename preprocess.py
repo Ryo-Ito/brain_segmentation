@@ -21,24 +21,24 @@ def preprocess(inputfile, outputfile, order=0, df=None, slice_axis=0):
         assert data.ndim == 3, data.ndim
     else:
         data = np.swapaxes(data, 0, slice_axis)
-        data_original = np.copy(data)
-        data = np.stack((data, data_original), axis=-1)
-        assert data.shape == data_original.shape + (2,), data.shape
-        clahe = cv2.createCLAHE(clipLimit=2., tileGridSize=(16, 16))
-        for i, slice_ in enumerate(data_original):
+        data = data.astype(np.float)
+        processed = np.zeros(data.shape + (2,))
+        for i, slice_ in enumerate(data):
             slice_ = (slice_ - slice_.mean()) / slice_.std()
             slice_ = np.nan_to_num(slice_)
             slice_sub = slice_ - cv2.GaussianBlur(slice_, (31, 31), 5)
             slice_sub = (slice_sub - np.min(slice_sub)) / (np.max(slice_sub) - np.min(slice_sub))
             slice_sub = np.array(slice_sub * 255, dtype=np.uint8)
-            slice_clahe = clahe.apply(slice_sub).astype(np.float)
+            clahe = cv2.createCLAHE(clipLimit=2., tileGridSize=(16, 16))
+            slice_clahe = clahe.apply(slice_sub)
+            slice_clahe = slice_clahe.astype(np.float)
             slice_clahe = (slice_clahe - slice_clahe.mean()) / slice_clahe.std()
             slice_clahe = np.nan_to_num(slice_clahe)
-            data[i, :, :, 0] = slice_clahe
-            data[i, :, :, 1] = slice_
-        data = np.swapaxes(data, 0, slice_axis)
+            processed[i, :, :, 0] = slice_clahe
+            processed[i, :, :, 1] = slice_
+        data = np.swapaxes(processed, 0, slice_axis)
         assert data.ndim == 4, data.ndim
-        data = np.float32(data)
+        data = data.astype(np.float32)
     img = nib.Nifti1Image(data, affine)
     nib.save(img, outputfile)
 
