@@ -71,10 +71,8 @@ def main():
         loss.backward()
         optimizer.update()
         if i % args.display_step == 0:
-            accuracy_c1 = F.accuracy(logits[0], y_train)
-            accuracy = F.accuracy(logits[-1], y_train)
-            print("step %5d, accuracy_c1 %.02f, accuracy %.02f, cost %g" % (
-                i, accuracy_c1.data, accuracy.data, loss.data))
+            accuracy = [float(F.accuracy(logit, y_train).data) for logit in logits]
+            print("step {0:5d}, acc_c1 {1[0]:.02f}, acc_c2 {1[1]:.02f}, acc_c3 {1[2]:.02f}, acc_c4 {1[3]:.02f}, acc {1[4]:.02f}".format(i, accuracy))
 
     vrn.to_cpu()
     chainer.serializers.save_npz(args.out, vrn)
