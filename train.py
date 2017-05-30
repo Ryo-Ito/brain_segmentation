@@ -65,14 +65,14 @@ def main():
         x_train = xp.asarray(image)
         y_train = xp.asarray(label)
         logits = vrn(x_train, train=True)
-        loss = 0
-        for logit in logits:
+        loss = F.softmax_cross_entropy(logits[-1], y_train)
+        for logit in logits[:-1]:
             loss += F.softmax_cross_entropy(logit, y_train)
         loss.backward()
         optimizer.update()
         if i % args.display_step == 0:
             accuracy = [float(F.accuracy(logit, y_train).data) for logit in logits]
-            print("step {0:5d}, acc_c1 {1[0]:.02f}, acc_c2 {1[1]:.02f}, acc_c3 {1[2]:.02f}, acc_c4 {1[3]:.02f}, acc {1[4]:.02f}".format(i, accuracy))
+            print("step {0:5d}, acc_c1 {1[0]:.02f}, acc_c2 {1[1]:.02f}, acc_c3 {1[2]:.02f}, acc_c4 {1[3]:.02f}, acc {1[4]:.02f}, loss {2:g}".format(i, accuracy, float(loss.data)))
 
     vrn.to_cpu()
     chainer.serializers.save_npz(args.out, vrn)
