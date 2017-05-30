@@ -14,7 +14,7 @@ def clahe(img):
     pass
 
 
-def preprocess(inputfile, outputfile, order=0, df=None):
+def preprocess(inputfile, outputfile, order=0, df=None, input_key=None, output_key=None):
     img = nib.load(inputfile)
     data = img.get_data()
     affine = img.affine
@@ -24,8 +24,10 @@ def preprocess(inputfile, outputfile, order=0, df=None):
     data = np.pad(data, [(0, 256 - len_) for len_ in data.shape], "constant")
     if order == 0:
         if df is not None:
-            for target, raw in zip(df["preprocessed"], df["raw"]):
-                data[np.where(data == raw)] = target
+            tmp = np.zeros_like(data)
+            for target, source in zip(df[input_key], df[output_key]):
+                tmp[np.where(data == source)] = target
+            data = tmp
         data = np.int32(data)
         assert data.ndim == 3, data.ndim
     else:
@@ -66,6 +68,12 @@ def main():
     parser.add_argument(
         "--label_file", "-l", type=str, default=None,
         help="csv file with label translation rule, default=None")
+    parser.add(
+        "--input_key", type=str, default=None,
+        help="specifies column for input of label translation, default=None")
+    parser.add_argument(
+        "--output_key", type=str, default=None,
+        help="specifies column for output of label translation, default=None")
     parser.add_argument(
         "--n_classes", type=int, default=4,
         help="number of classes to classify")
@@ -102,12 +110,14 @@ def main():
             os.path.join(args.input_directory, subject, filename),
             outputfile,
             order=0,
-            df=df)
+            df=df,
+            input_key=args.input_key,
+            output_key=args.output_key)
         dataset_list.append(filedict)
     dataset["data"] = dataset_list
 
     with open(args.output_file, "w") as f:
-        json.dump(dataset, f)
+        json.dump(dataset, f, indent=4, sort_keys=True)
 
 
 if __name__ == '__main__':
