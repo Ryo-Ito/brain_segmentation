@@ -68,7 +68,7 @@ def main():
     parser.add_argument(
         "--label_file", "-l", type=str, default=None,
         help="csv file with label translation rule, default=None")
-    parser.add(
+    parser.add_argument(
         "--input_key", type=str, default=None,
         help="specifies column for input of label translation, default=None")
     parser.add_argument(
