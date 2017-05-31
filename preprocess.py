@@ -25,7 +25,7 @@ def preprocess(inputfile, outputfile, order=0, df=None, input_key=None, output_k
     if order == 0:
         if df is not None:
             tmp = np.zeros_like(data)
-            for target, source in zip(df[input_key], df[output_key]):
+            for target, source in zip(df[output_key], df[input_key]):
                 tmp[np.where(data == source)] = target
             data = tmp
         data = np.int32(data)
