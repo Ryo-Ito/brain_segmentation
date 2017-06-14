@@ -26,6 +26,37 @@ def load_nifti(filename, with_affine=False):
     return data
 
 
+def crop_patch(image, center, shape, scale=1, label=None, return_slices=False):
+    slices = [
+        np.clip(range(c - len_ / 2, c + len_ / 2), 0, img_len - 1)
+        for c, len_, img_len in zip(center, shape, image.shape)
+    ]
+    slices = np.meshgrid(*slices, indexing="ij")
+    image_patch = image[slices]
+    if label is not None:
+        label_patch = label[slices]
+    image_patch = image_patch.transpose(3, 0, 1, 2)
+    if scale > 1:
+        slices = [
+            np.clip(range(c - len_ * scale / 2, c + len_ * scale / 2), 0, img_len - 1)
+            for c, len_, img_len in zip(center, shape, image.shape)
+        ]
+        slices = np.meshgrid(*slices, indexing="ij")
+        image_patch_ = zoom(image[slices], (1. / scale,) * 3 + (1,))
+        image_patch_ = image_patch_.transpose(3, 0, 1, 2)
+        image_patch = np.concatenate(
+            (image_patch, image_patch_), axis=0
+        )
+    if label is not None and return_slices:
+        return image_patch, label_patch, slices
+    elif label is None and return_slices:
+        return image_patch, slices
+    elif label is not None and not return_slices:
+        return image_patch, label_patch
+    else:
+        return image_patch
+
+
 def sample(df, n, shape, scale):
     """
     randomly sample patch images from DataFrame
@@ -49,8 +80,10 @@ def sample(df, n, shape, scale):
         label patches
     """
     N = len(df)
-    assert N >= n, "n should be smaller than or equal to " + str(N)
-    indices = np.random.choice(N, n, replace=False)
+    try:
+        indices = np.random.choice(N, n, replace=False)
+    except ValueError:
+        indices = np.random.choice(N, n, replace=True)
     image_files = df["image"][indices]
     label_files = df["label"][indices]
     images = []
@@ -61,23 +94,8 @@ def sample(df, n, shape, scale):
         mask = np.int32(label > 0)
         indices = np.where(mask > 0)
         i = np.random.choice(len(indices[0]))
-        slices = [
-            np.clip(range(index[i] - len_ / 2, index[i] + len_ / 2), 0, max_)
-            for index, len_, max_ in zip(indices, shape, image.shape)
-        ]
-        slices = np.meshgrid(*slices, indexing="ij")
-        image_patch = image[slices]
-        label_patch = label[slices]
-        image_patch = image_patch.transpose(3, 0, 1, 2)
-        if scale > 1:
-            slices = [
-                np.clip(range(index[i] - len_ * scale / 2, index[i] + len_ * scale / 2), 0, max_)
-                for index, len_, max_ in zip(indices, shape, image.shape)
-            ]
-            slices = np.meshgrid(*slices, indexing="ij")
-            image_patch_ = zoom(image[slices], (1. / scale,) * 3 + (1,))
-            image_patch_ = image_patch_.transpose(3, 0, 1, 2)
-            image_patch = np.concatenate((image_patch, image_patch_), axis=0)
+        center = [index[i] for index in indices]
+        image_patch, label_patch = crop_patch(image, center, shape, scale, label)
         images.append(image_patch)
         labels.append(label_patch)
     images = np.array(images)
