@@ -30,6 +30,10 @@ def main():
     parser.add_argument(
         "--gpu", "-g", default=-1, type=int,
         help="negative value indicates no gpu, default=-1")
+    parser.add_argument(
+        "--n_tiles", type=int, nargs="*", action="store",
+        default=[4, 4, 4],
+        help="number of tiles along each axis")
     args = parser.parse_args()
     print(args)
 
@@ -51,10 +55,11 @@ def main():
         image, affine = load_nifti(image_path, with_affine=True)
         image = image.transpose(3, 0, 1, 2)
         slices = [[], [], []]
-        for img_len, patch_len, slices_ in zip(image.shape[1:], args.shape, slices):
+        for img_len, patch_len, slices_, n_tile in zip(image.shape[1:], args.shape, slices, args.n_tiles):
             assert img_len > patch_len, (img_len, patch_len)
-            stride = int((img_len - patch_len) / int(img_len / patch_len))
-            for i in range(int(img_len / patch_len)):
+            assert img_len < patch_len * n_tile, "{} must be smaller than {} x {}".format(img_len, patch_len, n_tile)
+            stride = int((img_len - patch_len) / (n_tile - 1))
+            for i in range(n_tile - 1):
                 slices_.append(slice(i * stride, i * stride + patch_len))
             slices_.append(slice(img_len - patch_len, img_len))
         output = np.zeros((dataset["n_classes"],) + image.shape[1:])
