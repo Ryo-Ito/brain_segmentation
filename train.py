@@ -39,6 +39,9 @@ def main():
     parser.add_argument(
         "--weight_decay", "-w", default=0.0005, type=float,
         help="coefficient of l2norm weight penalty, default=0.0005")
+    parser.add_argument(
+        "--scale", type=int, default=1,
+        help="scaling factor, default=1")
     args = parser.parse_args()
     print(args)
 
@@ -46,7 +49,11 @@ def main():
         dataset = json.load(f)
     train_df = pd.DataFrame(dataset["data"])
 
-    vrn = VoxResNet(dataset["in_channels"], dataset["n_classes"])
+    if args.scale > 1:
+        vrn = VoxResNet(dataset["in_channels"] * 2, dataset["n_classes"])
+    else:
+        vrn = VoxResNet(dataset["in_channels"], dataset["n_classes"])
+
     if args.gpu >= 0:
         chainer.cuda.get_device(args.gpu).use()
         vrn.to_gpu()
@@ -61,7 +68,7 @@ def main():
 
     for i in range(args.iteration):
         vrn.cleargrads()
-        image, label = load.sample(train_df, args.n_batch, args.shape)
+        image, label = load.sample(train_df, args.n_batch, args.shape, args.scale)
         x_train = xp.asarray(image)
         y_train = xp.asarray(label)
         logits = vrn(x_train, train=True)

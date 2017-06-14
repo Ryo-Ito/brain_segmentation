@@ -1,5 +1,6 @@
 import nibabel as nib
 import numpy as np
+from scipy.ndimage import zoom
 
 
 def load_nifti(filename, with_affine=False):
@@ -25,7 +26,7 @@ def load_nifti(filename, with_affine=False):
     return data
 
 
-def sample(df, n, shape):
+def sample(df, n, shape, scale):
     """
     randomly sample patch images from DataFrame
 
@@ -37,6 +38,8 @@ def sample(df, n, shape):
         number of patches to extract
     shape : list
         shape of patches to extract
+    scale : int
+        scaling factor
 
     Returns
     -------
@@ -56,16 +59,25 @@ def sample(df, n, shape):
         image = load_nifti(image_file)
         label = load_nifti(label_file).astype(np.int32)
         mask = np.int32(label > 0)
-        slices = [slice(len_ / 2, -len_ / 2) for len_ in shape]
-        mask[slices] *= 2
-        indices = np.where(mask > 1.5)
+        indices = np.where(mask > 0)
         i = np.random.choice(len(indices[0]))
         slices = [
-            slice(index[i] - len_ / 2, index[i] + len_ / 2)
-            for index, len_ in zip(indices, shape)]
+            np.clip(range(index[i] - len_ / 2, index[i] + len_ / 2), 0, max_)
+            for index, len_, max_ in zip(indices, shape, image.shape)
+        ]
+        slices = np.meshgrid(*slices, indexing="ij")
         image_patch = image[slices]
         label_patch = label[slices]
         image_patch = image_patch.transpose(3, 0, 1, 2)
+        if scale > 1:
+            slices = [
+                np.clip(range(index[i] - len_ * scale / 2, index[i] + len_ * scale / 2), 0, max_)
+                for index, len_, max_ in zip(indices, shape, image.shape)
+            ]
+            slices = np.meshgrid(*slices, indexing="ij")
+            image_patch_ = zoom(image[slices], (1. / scale,) * 3 + (1,))
+            image_patch_ = image_patch_.transpose(3, 0, 1, 2)
+            image_patch = np.concatenate((image_patch, image_patch_), axis=0)
         images.append(image_patch)
         labels.append(label_patch)
     images = np.array(images)
