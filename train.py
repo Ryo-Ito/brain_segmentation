@@ -1,12 +1,13 @@
 import argparse
+import json
+
 import chainer
 import chainer.functions as F
-import json
 import numpy as np
 import pandas as pd
 
-import load
 from model import VoxResNet
+from utils import load_sample
 
 
 def main():
@@ -61,7 +62,7 @@ def main():
 
     for i in range(args.iteration):
         vrn.cleargrads()
-        image, label = load.sample(train_df, args.n_batch, args.shape)
+        image, label = load_sample(train_df, args.n_batch, args.shape)
         x_train = xp.asarray(image)
         y_train = xp.asarray(label)
         logits = vrn(x_train, train=True)

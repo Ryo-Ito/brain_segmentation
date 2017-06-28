@@ -10,10 +10,6 @@ from scipy.ndimage.filters import gaussian_filter
 import SimpleITK as sitk
 
 
-def clahe(img):
-    pass
-
-
 def preprocess(inputfile, outputfile, order=0, df=None, input_key=None, output_key=None):
     img = nib.load(inputfile)
     data = img.get_data()
@@ -54,6 +50,9 @@ def main():
         "--subjects", "-s", type=str, nargs="*", action="store",
         help="subjects to be preprocessed")
     parser.add_argument(
+        "--weights", "-w", type=int, nargs="*", action="store",
+        help="sample weight for each subject")
+    parser.add_argument(
         "--image_suffix", type=str, default="_ana_strip.nii.gz",
         help="suffix of images, default=_ana_strip.nii.gz")
     parser.add_argument(
@@ -78,6 +77,9 @@ def main():
         "--n_classes", type=int, default=4,
         help="number of classes to classify")
     args = parser.parse_args()
+    if args.weights is None:
+        args.weights = [1. for _ in args.subjects]
+    print(args)
 
     if args.label_file is None:
         df = None
@@ -89,11 +91,11 @@ def main():
 
     if not os.path.exists(args.output_directory):
         os.makedirs(args.output_directory)
-    for subject in args.subjects:
+    for subject, weight in zip(args.subjects, args.weights):
         output_folder = os.path.join(args.output_directory, subject)
         if not os.path.exists(output_folder):
             os.makedirs(output_folder)
-        filedict = {"subject": subject}
+        filedict = {"subject": subject, "weight": weight}
 
         filename = subject + args.image_suffix
         outputfile = os.path.join(output_folder, filename)

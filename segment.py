@@ -8,9 +8,8 @@ import numpy as np
 import nibabel as nib
 import pandas as pd
 
-from load import load_nifti
 from model import VoxResNet
-from utils import crop_patch
+from utils import crop_patch, load_nifti
 
 
 def main():
