@@ -79,6 +79,7 @@ def main():
     args = parser.parse_args()
     if args.weights is None:
         args.weights = [1. for _ in args.subjects]
+    assert len(args.subjects) == len(args.weights)
     print(args)
 
     if args.label_file is None:
