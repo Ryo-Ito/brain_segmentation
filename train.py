@@ -42,7 +42,7 @@ parser.add_argument(
 parser.add_argument(
     "--n_tiles", type=int, nargs="*", action="store",
     default=[5, 5, 5],
-    help="number of tiles along each axis")
+    help="number of tiles along each axis, default=[5, 5, 5]")
 parser.add_argument(
     '--out', '-o', default='vrn.npz', type=str,
     help='parameters of trained model, default=vrn.npz')
