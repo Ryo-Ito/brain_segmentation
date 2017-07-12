@@ -25,7 +25,7 @@ def load_nifti(filename, with_affine=False):
     return data
 
 
-def load_sample(df, n, shape):
+def load_sample(df, n, input_shape, output_shape):
     """
     randomly sample patch images from DataFrame
 
@@ -35,14 +35,16 @@ def load_sample(df, n, shape):
         DataFrame containing name of image files
     n : int
         number of patches to extract
-    shape : list
-        shape of patches to extract
+    input_shape : list
+        shape of input patches to extract
+    output_shape : list
+        shape of output patches to extract
 
     Returns
     -------
-    images : (n, n_channels, shape[0], shape[1], ...) ndarray
+    images : (n, n_channels, input_shape[0], input_shape[1], ...) ndarray
         input patches
-    labels : (n, shape[0], shape[1], ...) ndarray
+    labels : (n, output_shape[0], output_shape[1], ...) ndarray
         label patches
     """
     N = len(df)
@@ -60,16 +62,20 @@ def load_sample(df, n, shape):
         image = load_nifti(image_file)
         label = load_nifti(label_file).astype(np.int32)
         mask = np.int32(label > 0)
-        slices = [slice(len_ / 2, -len_ / 2) for len_ in shape]
+        slices = [slice(len_ / 2, -len_ / 2) for len_ in input_shape]
         mask[slices] *= 2
         indices = np.where(mask > 1.5)
         i = np.random.choice(len(indices[0]))
-        slices = [
+        input_slices = [
             slice(index[i] - len_ / 2, index[i] + len_ / 2)
-            for index, len_ in zip(indices, shape)
+            for index, len_ in zip(indices, input_shape)
         ]
-        image_patch = image[slices]
-        label_patch = label[slices]
+        output_slices = [
+            slice(index[i] - len_ / 2, index[i] + len_ / 2)
+            for index, len_ in zip(indices, output_shape)
+        ]
+        image_patch = image[input_slices]
+        label_patch = label[output_slices]
         image_patch = image_patch.transpose(3, 0, 1, 2)
         images.append(image_patch)
         labels.append(label_patch)

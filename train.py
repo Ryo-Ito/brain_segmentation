@@ -119,13 +119,14 @@ optimizer = chainer.optimizers.Adam(alpha=args.learning_rate)
 optimizer.use_cleargrads()
 optimizer.setup(vrn)
 optimizer.add_hook(chainer.optimizer.WeightDecay(args.weight_decay))
-
+slices_in = [slice(None), slice(None)] + [slice((len_in - len_out) / 2, len_in - (len_in - len_out) / 2) for len_out, len_in, in zip(args.output_shape, args.input_shape)]
 for i in range(args.iteration):
     vrn.cleargrads()
-    image, label = load_sample(train_df, args.n_batch, args.input_shape)
+    image, label = load_sample(train_df, args.n_batch, args.input_shape, args.output_shape)
     x_train = xp.asarray(image)
     y_train = xp.asarray(label)
     logits = vrn(x_train, train=True)
+    logits = [logit[slices_in] for logit in logits]
     loss = F.softmax_cross_entropy(logits[-1], y_train)
     for logit in logits[:-1]:
         loss += F.softmax_cross_entropy(logit, y_train)
