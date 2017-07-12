@@ -36,6 +36,14 @@ parser.add_argument(
     default=[80, 80, 80],
     help="shape of input for the network, default=[80, 80, 80]")
 parser.add_argument(
+    "--output_shape", type=int, nargs="*", action="store",
+    default=[60, 60, 60],
+    help="shape of output of the network, default=[60, 60, 60]")
+parser.add_argument(
+    "--n_tiles", type=int, nargs="*", action="store",
+    default=[5, 5, 5],
+    help="number of tiles along each axis")
+parser.add_argument(
     '--out', '-o', default='vrn.npz', type=str,
     help='parameters of trained model, default=vrn.npz')
 parser.add_argument(
