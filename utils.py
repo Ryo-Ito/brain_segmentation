@@ -102,11 +102,16 @@ def crop_patch(image, center, shape):
     patch : (n_channels, xlen, ylen, zlen) np.ndarray
         extracted patch
     """
-    slices = [
-        np.clip(range(c - len_ / 2, c + len_ / 2), 0, img_len - 1)
-        for c, len_, img_len in zip(center, shape, image.shape)
-    ]
-    slices = np.meshgrid(*slices, indexing="ij")
+    mini = [c - len_ / 2 for c, len_ in zip(center, shape)]
+    maxi = [c + len_ / 2 for c, len_ in zip(center, shape)]
+    if all(m >= 0 for m in mini) and all(m < img_len for m, img_len in zip(maxi, image.shape)):
+        slices = [slice(mi, ma) for mi, ma in zip(mini, maxi)]
+    else:
+        slices = [
+            np.clip(range(mi, ma), 0, img_len - 1)
+            for mi, ma, img_len in zip(mini, maxi, image.shape)
+        ]
+        slices = np.meshgrid(*slices, indexing="ij")
     patch = image[slices]
     patch = patch.transpose(3, 0, 1, 2)
     return patch
