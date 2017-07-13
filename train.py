@@ -62,6 +62,7 @@ if args.validation_file is not None:
     with open(args.validation_file) as f:
         dataset_val = json.load(f)
     df_val = pd.DataFrame(dataset_val["data"])
+    val_score = 0
 
 vrn = VoxResNet(dataset["in_channels"], dataset["n_classes"])
 if args.gpu >= 0:
@@ -136,8 +137,21 @@ for i in range(args.iteration):
         accuracy = [float(F.accuracy(logit, y_train).data) for logit in logits]
         print("step {0:5d}, acc_c1 {1[0]:.02f}, acc_c2 {1[1]:.02f}, acc_c3 {1[2]:.02f}, acc_c4 {1[3]:.02f}, acc {1[4]:.02f}, loss {2:g}".format(i, accuracy, float(loss.data)))
         if args.validation_file is not None:
-            mean_dice_coefs = validate(vrn)
-            print(*["val/dice{} {:.02f}".format(i, dice) for i, dice in enumerate(mean_dice_coefs)], sep=", ")
+            dice_coefs = validate(vrn)
+            mean_dice_coefs = np.mean(dice_coefs)
+            if mean_dice_coefs > val_score:
+                chainer.serializers.save_npz(args.out, vrn)
+                print("step {:5d}, saved model".format(i))
+                val_score = mean_dice_coefs
+            print("step {:5d}".format(i), "val/dice {:.02f}".format(mean_dice_coefs), *["val/dice{} {:.02f}".format(j, dice) for j, dice in enumerate(dice_coefs)], sep=", ")
 
-vrn.to_cpu()
-chainer.serializers.save_npz(args.out, vrn)
+if args.validation_file is not None:
+    dice_coefs = validate(vrn)
+    mean_dice_coefs = np.mean(dice_coefs)
+    if mean_dice_coefs > val_score:
+        chainer.serializers.save_npz(args.out, vrn)
+        print("step {:5d}, saved model".format(args.iteration))
+    print("step {:5d}".format(args.iteration), "val/dice {:.02f}".format(mean_dice_coefs), *["val/dice{} {:.02f}".format(j, dice) for j, dice in enumerate(dice_coefs)], sep=", ")
+else:
+    chainer.serializers.save_npz(args.out, vrn)
+    print("step {:5d}, saved model".format(args.iteration))
