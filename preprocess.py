@@ -53,11 +53,11 @@ def main():
         "--weights", "-w", type=int, nargs="*", action="store",
         help="sample weight for each subject")
     parser.add_argument(
-        "--image_suffix", type=str, default="_ana_strip.nii.gz",
-        help="suffix of images, default=_ana_strip.nii.gz")
+        "--image_suffix", type=str,
+        help="suffix of images")
     parser.add_argument(
-        "--label_suffix", type=str, default="_segTRI_ana.nii.gz",
-        help="suffix of labels, default=_segTRI_ana.nii.gz")
+        "--label_suffix", type=str,
+        help="suffix of labels")
     parser.add_argument(
         "--output_directory", "-o", type=str,
         help="directory of preprocessed dataset")
@@ -74,7 +74,7 @@ def main():
         "--output_key", type=str, default=None,
         help="specifies column for output of label translation, default=None")
     parser.add_argument(
-        "--n_classes", type=int, default=4,
+        "--n_classes", type=int,
         help="number of classes to classify")
     args = parser.parse_args()
     if args.weights is None:
@@ -98,24 +98,27 @@ def main():
             os.makedirs(output_folder)
         filedict = {"subject": subject, "weight": weight}
 
-        filename = subject + args.image_suffix
-        outputfile = os.path.join(output_folder, filename)
-        filedict["image"] = outputfile
-        preprocess(
-            os.path.join(args.input_directory, subject, filename),
-            outputfile,
-            order=1)
+        if args.image_suffix is not None:
+            filename = subject + args.image_suffix
+            outputfile = os.path.join(output_folder, filename)
+            filedict["image"] = outputfile
+            preprocess(
+                os.path.join(args.input_directory, subject, filename),
+                outputfile,
+                order=1)
 
-        filename = subject + args.label_suffix
-        outputfile = os.path.join(output_folder, filename)
-        filedict["label"] = outputfile
-        preprocess(
-            os.path.join(args.input_directory, subject, filename),
-            outputfile,
-            order=0,
-            df=df,
-            input_key=args.input_key,
-            output_key=args.output_key)
+        if args.label_suffix is not None:
+            filename = subject + args.label_suffix
+            outputfile = os.path.join(output_folder, filename)
+            filedict["label"] = outputfile
+            preprocess(
+                os.path.join(args.input_directory, subject, filename),
+                outputfile,
+                order=0,
+                df=df,
+                input_key=args.input_key,
+                output_key=args.output_key)
+
         dataset_list.append(filedict)
     dataset["data"] = dataset_list
 
