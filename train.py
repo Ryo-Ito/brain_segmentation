@@ -95,7 +95,7 @@ def validate(model):
             slices_in = [slice((len_in - len_out) / 2, len_in - (len_in - len_out) / 2) for len_out, len_in, in zip(args.output_shape, args.input_shape)]
             output[slice(None), slices_out[0], slices_out[1], slices_out[2]] += chainer.cuda.to_cpu(model(patch).data[0, slice(None), slices_in[0], slices_in[1], slices_in[2]])
         y = np.argmax(output, axis=0).astype(np.int32)
-        dice_coefs.append(dice_coefficients(y, label))
+        dice_coefs.append(dice_coefficients(y, label, labels=range(dataset["n_classes"])))
     dice_coefs = np.array(dice_coefs)
     return np.mean(dice_coefs, axis=0)
 
