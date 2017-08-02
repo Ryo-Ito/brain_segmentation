@@ -9,7 +9,7 @@ import nibabel as nib
 import pandas as pd
 
 from model import VoxResNet
-from utils import crop_patch, load_nifti
+from utils import crop_patch, load_nifti, feedforward
 
 
 def main():
@@ -49,31 +49,19 @@ def main():
     chainer.serializers.load_npz(args.model, vrn)
 
     if args.gpu >= 0:
-        chainer.cuda.get_device(args.gpu).use()
+        chainer.cuda.get_device_from_id(args.gpu).use()
         vrn.to_gpu()
-        xp = chainer.cuda.cupy
-    else:
-        xp = np
 
     for image_path, subject in zip(test_df["image"], test_df["subject"]):
         image, affine = load_nifti(image_path, with_affine=True)
-        centers = [[], [], []]
-        for img_len, len_out, center, n_tile in zip(image.shape, args.output_shape, centers, args.n_tiles):
-            assert img_len < len_out * n_tile, "{} must be smaller than {} x {}".format(img_len, len_out, n_tile)
-            stride = int((img_len - len_out) / (n_tile - 1))
-            center.append(len_out / 2)
-            for i in range(n_tile - 2):
-                center.append(center[-1] + stride)
-            center.append(img_len - len_out / 2)
-        output = np.zeros((dataset["n_classes"],) + image.shape[:-1])
-        for x, y, z in itertools.product(*centers):
-            patch = crop_patch(image, [x, y, z], args.input_shape)
-            patch = np.expand_dims(patch, 0)
-            patch = xp.asarray(patch)
-            slices_out = [slice(center - len_out / 2, center + len_out / 2) for len_out, center in zip(args.output_shape, [x, y, z])]
-            slices_in = [slice((len_in - len_out) / 2, len_in - (len_in - len_out) / 2) for len_out, len_in, in zip(args.output_shape, args.input_shape)]
-            output[slice(None), slices_out[0], slices_out[1], slices_out[2]] += chainer.cuda.to_cpu(
-                vrn(patch).data[0, slice(None), slices_in[0], slices_in[1], slices_in[2]])
+        output = feedforward(
+            vrn,
+            image,
+            args.input_shape,
+            args.output_shape,
+            args.n_tiles,
+            dataset["n_classes"]
+        )
         y = np.argmax(output, axis=0)
         nib.save(
             nib.Nifti1Image(np.int32(y), affine),

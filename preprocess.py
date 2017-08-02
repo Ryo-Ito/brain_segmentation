@@ -10,7 +10,12 @@ from scipy.ndimage.filters import gaussian_filter
 import SimpleITK as sitk
 
 
-def preprocess(inputfile, outputfile, order=0, df=None, input_key=None, output_key=None):
+def preprocess(inputfile,
+               outputfile,
+               order=0,
+               df=None,
+               input_key=None,
+               output_key=None):
     img = nib.load(inputfile)
     data = img.get_data()
     affine = img.affine
@@ -33,9 +38,6 @@ def preprocess(inputfile, outputfile, order=0, df=None, input_key=None, output_k
         data_clahe = sitk.GetArrayFromImage(img)[:, :, :, None]
         data = np.concatenate((data_clahe, data[:, :, :, None]), 3)
         data = (data - np.mean(data, (0, 1, 2))) / np.std(data, (0, 1, 2))
-        assert data.ndim == 4, data.ndim
-        assert np.allclose(np.mean(data, (0, 1, 2)), 0.), np.mean(data, (0, 1, 2))
-        assert np.allclose(np.std(data, (0, 1, 2)), 1.), np.std(data, (0, 1, 2))
         data = np.float32(data)
     img = nib.Nifti1Image(data, affine)
     nib.save(img, outputfile)

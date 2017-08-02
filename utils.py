@@ -1,3 +1,5 @@
+import itertools
+import chainer
 import numpy as np
 import nibabel as nib
 
@@ -131,3 +133,38 @@ def dice_coefficients(label1, label2, labels=None):
         else:
             dice_coefs.append(numerator / denominator)
     return dice_coefs
+
+
+def feedforward(model, image, input_shape, output_shape, n_tiles, n_classes):
+    centers = [[] for _ in range(3)]
+    for img_len, len_out, center, n_tile in zip(image.shape,
+                                                output_shape,
+                                                centers,
+                                                n_tiles):
+        if img_len < len_out * n_tile:
+            raise ValueError(
+                f"{img_len} must be smaller than {len_out} x {n_tile}"
+            )
+
+        stride = int((img_len - len_out) / (n_tile - 1))
+        center.append(len_out / 2)
+        for i in range(n_tile - 2):
+            center.append(center[-1] + stride)
+        center.append(img_len - len_out / 2)
+    output = np.zeros((n_classes,) + image.shape[:-1])
+    for x, y, z in itertools.product(*centers):
+        patch = crop_patch(image, [x, y, z], input_shape)
+        patch = np.expand_dims(patch, 0)
+        patch = chainer.Variable(patch)
+        slices_out = [slice(None)] + [
+                slice(center - len_out / 2, center + len_out / 2)
+                for len_out, center in zip(output_shape, [x, y, z])
+        ]
+        slices_in = [0, slice(None)] + [
+            slice((len_in - len_out) / 2, (len_out - len_in) / 2)
+            for len_out, len_in, in zip(output_shape, input_shape)
+        ]
+        with chainer.no_backprop_mode():
+            output[slices_out] += chainer.cuda.to_cpu(model(patch)).data[slices_in]
+
+    return output
