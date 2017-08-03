@@ -101,22 +101,22 @@ class VoxResNet(chainer.Chain):
 
             h = F.relu(self.bnorm1b(h))
             h = self.conv1c(h)
-            h = self.voxres2(h, train)
-            h = self.voxres3(h, train)
+            h = self.voxres2(h)
+            h = self.voxres3(h)
             c2 = F.clipped_relu(self.c2deconv(h))
             c2 = self.c2conv(c2)
 
             h = F.relu(self.bnorm3(h))
             h = self.conv4(h)
-            h = self.voxres5(h, train)
-            h = self.voxres6(h, train)
+            h = self.voxres5(h)
+            h = self.voxres6(h)
             c3 = F.clipped_relu(self.c3deconv(h))
             c3 = self.c3conv(c3)
 
             h = F.relu(self.bnorm6(h))
             h = self.conv7(h)
-            h = self.voxres8(h, train)
-            h = self.voxres9(h, train)
+            h = self.voxres8(h)
+            h = self.voxres9(h)
             c4 = F.clipped_relu(self.c4deconv(h))
             c4 = self.c4conv(c4)
 
