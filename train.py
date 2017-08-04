@@ -25,7 +25,7 @@ def validate(model, df, input_shape, output_shape, n_tiles, n_classes):
             n_classes)
         y = np.int32(np.argmax(output, axis=0))
         dice_coefs.append(
-            dice_coefficients(y, label, labels=range(dataset["n_classes"]))
+            dice_coefficients(y, label, labels=range(n_classes))
         )
     dice_coefs = np.array(dice_coefs)
     return np.mean(dice_coefs, axis=0)
@@ -105,16 +105,17 @@ def main():
             args.input_shape,
             args.output_shape
         )
-        x_train = chainer.Variable(image)
-        y_train = chainer.Variable(label)
+        x_train = vrn.xp.asarray(image)
+        y_train = vrn.xp.asarray(label)
         logits = vrn(x_train, train=True)
+        logits = [logit[slices_in] for logit in logits]
         loss = F.softmax_cross_entropy(logits[-1], y_train)
         for logit in logits[:-1]:
             loss += F.softmax_cross_entropy(logit, y_train)
         loss.backward()
         optimizer.update()
         if i % args.monitor_step == 0:
-            accuracy = float(F.accuracy(logits[-1], y_train))
+            accuracy = float(F.accuracy(logits[-1], y_train).data)
             print(
                 f"step {i:5d}, accuracy {accuracy:.02f}, loss {float(loss.data):g}"
             )
@@ -124,9 +125,9 @@ def main():
                     vrn,
                     df_val,
                     args.input_shape,
-                    args.output_sape,
+                    args.output_shape,
                     args.n_tiles,
-                    args.n_classes
+                    dataset["n_classes"]
                 )
                 mean_dice_coefs = np.mean(dice_coefs)
                 if mean_dice_coefs > val_score:
@@ -147,14 +148,14 @@ def main():
             args.input_shape,
             args.output_shape,
             args.n_tiles,
-            args.n_classes
+            dataset["n_classes"]
         )
         mean_dice_coefs = np.mean(dice_coefs)
         if mean_dice_coefs > val_score:
             chainer.serializers.save_npz(args.out, vrn)
             print(f"step {args.iteration:5d}, saved model")
         print(
-            f"step {i:5d}",
+            f"step {args.iteration:5d}",
             f"val/dice {mean_dice_coefs:.02f}",
             *[f"val/dice{j} {dice:.02f}" for j, dice in enumerate(dice_coefs)],
             sep=", "
