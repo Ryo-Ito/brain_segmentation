@@ -18,8 +18,8 @@ def main():
         "--input_file", "-i", type=str,
         help="input json file of test dataset")
     parser.add_argument(
-        "--output_suffix", "-o", type=str, default="_segTRI_predict.nii.gz",
-        help="result of the segmentation, default=_segTRI_predict.nii.gz")
+        "--output_suffix", "-o", type=str
+        help="result of the segmentation")
     parser.add_argument(
         "--model", "-m", type=str,
         help="a file containing parameters of trained VoxResNet")
