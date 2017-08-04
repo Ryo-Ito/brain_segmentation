@@ -1,6 +1,5 @@
 import itertools
 import chainer
-import cupy as cp
 import numpy as np
 import nibabel as nib
 
@@ -156,7 +155,7 @@ def feedforward(model, image, input_shape, output_shape, n_tiles, n_classes):
     for x, y, z in itertools.product(*centers):
         patch = crop_patch(image, [x, y, z], input_shape)
         patch = np.expand_dims(patch, 0)
-        patch = cp.asarray(patch)
+        patch = model.xp.asarray(patch)
         slices_out = [slice(None)] + [
                 slice(center - len_out // 2, center + len_out // 2)
                 for len_out, center in zip(output_shape, [x, y, z])
