@@ -18,7 +18,7 @@ def main():
         "--input_file", "-i", type=str,
         help="input json file of test dataset")
     parser.add_argument(
-        "--output_suffix", "-o", type=str
+        "--output_suffix", "-o", type=str,
         help="result of the segmentation")
     parser.add_argument(
         "--model", "-m", type=str,
