@@ -6,8 +6,9 @@ Note that this is not an official implementation.
 
 
 # Requirements
-- python 2.7
-- chainer
+- python 3.6
+- chainer v2
+- cupy
 - dipy
 - nibabel
 - numpy
@@ -18,10 +19,10 @@ Note that this is not an official implementation.
 # Preparing dataset
 1. Download [Internet Brain Segmentation Repository (IBSR)](https://www.nitrc.org/frs/download.php/5731/IBSR_V2.0_nifti_stripped.tgz) (or other dataset you want to try)
 2. preprocess dataset
-  - training dataset  
-  `$ python preprocess.py -i /path/to/IBSR/dataset -s IBSR_01 IBSR_02 IBSR_03 IBSR_04 IBSR_05 -o ./preprocessed -f dataset_train.json`
-  - test dataset  
-  `$ python preprocess.py -i /path/to/IBSR/dataset -s IBSR_11 IBSR_12 IBSR_13 IBSR_14 IBSR_15 -o ./preprocessed -f dataset_test.json`
+  - training dataset
+  `$ python preprocess.py -i /path/to/IBSR/dataset -s IBSR_01 IBSR_02 IBSR_03 IBSR_04 IBSR_05 --input_image_suffix _ana_strip.nii.gz --output_image_suffix _preprocessed.nii.gz --label_suffix _segTRI_ana.nii.gz -f dataset_train.json --n_classes 4 --zooms 1. 1. 1.`
+  - test dataset
+  `$ python preprocess.py -i /path/to/IBSR/dataset -s IBSR_11 IBSR_12 IBSR_13 IBSR_14 IBSR_15 --input_image_suffix _ana_strip.nii.gz --output_image_suffix _preprocessed.nii.gz --label_suffix _segTRI_ana.nii.gz -f dataset_test.json --n_classes 4 --zooms 1. 1. 1.`
 
 
 # Train VoxResNet
@@ -29,7 +30,7 @@ Note that this is not an official implementation.
 
 
 # Test VoxResNet
-`$ python segment.py -g 0 -i dataset_test.json -m vrn.npz`
+`$ python segment.py -g 0 -i dataset_test.json -m vrn.npz -o _segTRI_predict.nii.gz`
 
 
 # Reference
